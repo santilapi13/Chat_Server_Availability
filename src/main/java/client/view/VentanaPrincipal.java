@@ -54,13 +54,13 @@ public class VentanaPrincipal extends JFrame implements IVista, KeyListener, Mou
 
 
 	//Metodo main para ejecutar ventana
-
+	/*
 	public static void main(String[] args)
 	{
 
 		VentanaPrincipal window = new VentanaPrincipal();
 	}
-
+	*/
 
 	public VentanaPrincipal() {
 		setTitle("Ventana Principal para establecer conexion");
@@ -185,13 +185,12 @@ public class VentanaPrincipal extends JFrame implements IVista, KeyListener, Mou
 
 	@Override
 	public void keyReleased(KeyEvent e) {
-		this.btnSolicitarChat.setEnabled(validarSolicitarChat());
 	}
 
 	private boolean validarSolicitarChat() {
 		boolean resp = false;
 
-		resp = this.listUsuariosDisponibles.getSelectedIndex() != -1;
+		resp = this.listUsuariosDisponibles.getSelectedIndex() != -1 && !this.rdbtnNewRadioButton.isSelected();
 
 		return resp;
 	}
@@ -205,6 +204,7 @@ public class VentanaPrincipal extends JFrame implements IVista, KeyListener, Mou
 	public String getDireccionIP() {
 		String usuario = this.listUsuariosDisponibles.getSelectedValue();
 		String[] partes = usuario.split(", ");
+		System.out.println("Direccion IP: " + partes[1]);
 		return partes[1];
 	}
 
@@ -221,6 +221,7 @@ public class VentanaPrincipal extends JFrame implements IVista, KeyListener, Mou
 	public String getPuertoIP() {
 		String usuario = this.listUsuariosDisponibles.getSelectedValue();
 		String[] partes = usuario.split(", ");
+		System.out.println("Puerto IP: " + partes[2]);
 		return partes[2];
 	}
 
@@ -281,6 +282,7 @@ public class VentanaPrincipal extends JFrame implements IVista, KeyListener, Mou
 		} else {
 			this.btnSolicitarChat.setEnabled(false);
 		}
+		this.btnSolicitarChat.setEnabled(validarSolicitarChat());
 	}
 
 	@Override

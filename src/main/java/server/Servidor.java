@@ -56,12 +56,12 @@ public class Servidor {
         this.usuarios.remove(username);
     }
 
-    public void actualizarListaUsuarios(String usuarioANotificar, PrintWriter salida) {
+    public void actualizarListaUsuarios(String usuarioAActualizar, PrintWriter salida) {
         salida.println(this.usuarios.size() - 1);
         for (Map.Entry<String, SocketUsuario> usuario : this.usuarios.entrySet()) {
-            if (usuario.getValue().getUsername() != usuarioANotificar) {
+            if (usuario.getValue().getUsername() != usuarioAActualizar) {
                 // Envía username, IP y Puerto
-                salida.println(usuario.getKey() + ", " + usuario.getValue().getSocket().getInetAddress() + ", " + usuario.getValue().getSocket().getPort());
+                salida.println(usuario.getKey() + ", " + usuario.getValue().getSocket().getInetAddress().getHostAddress() + ", " + usuario.getValue().getSocket().getPort());
             }
 
         }
