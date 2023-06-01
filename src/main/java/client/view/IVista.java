@@ -27,4 +27,8 @@ public interface IVista {
 
     void deseleccionar();
 
+    void agregarUsuarioDisponible(String usuario);
+
+    void vaciarUsuariosDisponibles();
+
 }

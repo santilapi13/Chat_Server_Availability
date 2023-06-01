@@ -77,22 +77,26 @@ public class SocketUsuario extends Thread {
         String mensaje = this.entrada.readLine();
 
         // Si el usuario se desconecto, lo elimina de la lista.
-        if (mensaje.equals("503")) {
+        if (mensaje.equals(Codigos.DESCONECTAR.name())) {
             System.out.println("Usuario " + this.username + " se desconecto.");
-            Servidor.getInstance().getUsuarios().remove(this.username);
+            Servidor.getInstance().desconectarUsuario(this.username);
 
         // Si el usuario activo el modo escucha.
-        } else if (mensaje.equals("300")) {
+        } else if (mensaje.equals(Codigos.ACTIVAR_ESCUCHA.name())) {
             System.out.println("Usuario " + this.username + " activo el modo escucha.");
             this.escuchando = true;
 
         // Si el usuario desactivo el modo escucha.
-        } else if (mensaje.equals("301")) {
+        } else if (mensaje.equals(Codigos.DESACTIVAR_ESCUCHA.name())) {
             System.out.println("Usuario " + this.username + " desactivo el modo escucha.");
             this.escuchando = false;
 
+        // Si el usuario solicito actualizar la lista de usuarios.
+        } else if (mensaje.equals(Codigos.ACTUALIZAR_LISTA_USUARIOS.name())) {
+            Servidor.getInstance().actualizarListaUsuarios(this.username, this.salida);
+
         // Si el usuario inicia el chat con quien se lo solicito
-        } else if (this.interlocutor != null && mensaje.equals("350")) {
+        } else if (this.interlocutor != null && mensaje.equals(Codigos.INICIAR_CHAT.name())) {
             this.escuchando = false;
             this.enChat = true;
             System.out.println("Usuario " + this.username + " ingreso al chat con " + this.interlocutor + ".");
@@ -102,11 +106,11 @@ public class SocketUsuario extends Thread {
             if (usernameInterlocutor != null) {
                 this.enChat = true;
                 this.interlocutor = usernameInterlocutor;
-                this.salida.println("200");
+                this.salida.println(Codigos.OK);
                 System.out.println("Usuario " + username + " se conecto con " + this.interlocutor + ".");
                 this.salida.println(this.interlocutor);
             } else
-                this.salida.println("404");
+                this.salida.println(Codigos.NO_ENCONTRADO);
         }
     }
 
@@ -114,14 +118,14 @@ public class SocketUsuario extends Thread {
         String codigo = this.entrada.readLine();
 
         // Si el usuario salio del chat.
-        if (codigo.equals("504")) {
+        if (codigo.equals(Codigos.CERRAR_CHAT.name())) {
             System.out.println("Usuario " + this.username + " salio de la sesion de chat.");
             Servidor.getInstance().cerrarChat(this.interlocutor);
             this.enChat = false;
             this.interlocutor = null;
 
         // Si su interlocutor le envio un mensaje
-        } else if (codigo.equals("351")) {
+        } else if (codigo.equals(Codigos.NUEVO_MENSAJE.name())) {
             String mensaje = this.entrada.readLine();
             System.out.println("Usuario " + this.username + " quiere enviar un mensaje.");
             Servidor.getInstance().enviarMensaje(this.interlocutor, mensaje);

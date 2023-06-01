@@ -2,6 +2,7 @@ package client.model;
 
 import client.controller.ControladorChat;
 import client.controller.ControladorPrincipal;
+import server.Codigos;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -120,14 +121,14 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
      }
 
     private void activarModoEscucha() throws IOException {
-        this.salida.println("300");
+        this.salida.println(Codigos.ACTIVAR_ESCUCHA);
         escuchando = true;
         System.out.println("Modo escucha activado.");
         this.iniciarSesionChat();
     }
 
     public void desactivarModoEscucha() throws IOException {
-        this.salida.println("301");
+        this.salida.println(Codigos.DESACTIVAR_ESCUCHA);
         escuchando = false;
         System.out.println("Modo escucha desactivado.");
     }
@@ -173,7 +174,7 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
 
         System.out.println(mensajeEncriptado);
         this.sesionChatActual.addMensaje(mensaje, true);
-        this.salida.println("351");
+        this.salida.println(Codigos.NUEVO_MENSAJE);
         this.salida.println(mensajeEncriptado);
     }
 

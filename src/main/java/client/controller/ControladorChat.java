@@ -2,6 +2,7 @@ package client.controller;
 
 import client.model.Usuario;
 import client.view.*;
+import server.Codigos;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -36,10 +37,11 @@ public class ControladorChat implements ActionListener, Runnable  {
                 try {
                     cerroVentana = true;
                     ControladorChat.getInstance().conexionEstablecida = false;
-                    Usuario.getInstance().getSalida().println("504");   // Se desconecto del chat
+                    Usuario.getInstance().getSalida().println(Codigos.CERRAR_CHAT);   // Se desconecto del chat
                     Usuario.getInstance().desconectar();
                     java.awt.Toolkit.getDefaultToolkit().beep();
                     ControladorPrincipal.getInstance().getVista().abrirVentana();
+                    ControladorPrincipal.getInstance().actualizarListaUsuarios();
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
@@ -86,18 +88,19 @@ public class ControladorChat implements ActionListener, Runnable  {
                     codigo = Usuario.getInstance().getEntrada().readLine();
 
                 // Si su interlocutor salio del chat.
-                if (codigo.equals("504")) {
+                if (codigo.equals(Codigos.CERRAR_CHAT.name())) {
                     conexionEstablecida = false;
 
                     // Si su interlocutor le envio un mensaje.
-                } else if (codigo.equals("351")) {
+                } else if (codigo.equals(Codigos.NUEVO_MENSAJE.name())) {
                     vista.agregarMensaje(Usuario.getInstance().getSesionActual().getRemoto().getUsername() + ": " + Usuario.getInstance().recibirMensaje());
                 }
             }
             if (!cerroVentana) {
-                Usuario.getInstance().getSalida().println("504");
+                Usuario.getInstance().getSalida().println(Codigos.CERRAR_CHAT);
                 Usuario.getInstance().desconectar();
                 ControladorPrincipal.getInstance().getVista().abrirVentana();
+                ControladorPrincipal.getInstance().actualizarListaUsuarios();
                 java.awt.Toolkit.getDefaultToolkit().beep();
                 ((VentanaChat) vista).dispose();
             }

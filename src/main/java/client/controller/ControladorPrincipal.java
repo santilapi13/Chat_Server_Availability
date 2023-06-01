@@ -9,10 +9,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.UnknownHostException;
 
 import client.model.Usuario;
+import server.Codigos;
 
 import javax.swing.*;
 
@@ -24,12 +26,16 @@ public class ControladorPrincipal implements ActionListener {
     private ControladorPrincipal() {
         this.vista = new VentanaPrincipal();
         this.vista.setActionListener(this);
+        try {
+            this.actualizarListaUsuarios();
+        } catch (IOException e) {
+        }
         ((VentanaPrincipal) this.vista).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         ((VentanaPrincipal) this.vista).addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 try {
-                    Usuario.getInstance().getSalida().println("503");
+                    Usuario.getInstance().getSalida().println(Codigos.DESCONECTAR);
                     System.out.println("Cerrando ventana principal");
                     java.awt.Toolkit.getDefaultToolkit().beep();
                     System.exit(0);
@@ -73,25 +79,38 @@ public class ControladorPrincipal implements ActionListener {
                 String respuesta = Usuario.getInstance().getEntrada().readLine();
 
                 // Solicitud aceptada
-                if (respuesta.equalsIgnoreCase("200")) {
+                if (respuesta.equals(Codigos.OK.name())) {
                     Usuario.getInstance().iniciarSesionChat();
 
                 // Error en solicitud: no encontrado
-                } else if (respuesta.equalsIgnoreCase("404")) {
+                } else if (respuesta.equals(Codigos.NO_ENCONTRADO.name())) {
                     java.awt.Toolkit.getDefaultToolkit().beep();
-                    JOptionPane.showMessageDialog(null, "ERROR: Compruebe IP y puertos. Recuerde el otro usuario debe estar en modo escucha.");
+                    JOptionPane.showMessageDialog(null, "ERROR: El usuario solicitado no se encuentra en Modo Escucha");
                 }
 
-            }
-            if (comando.equalsIgnoreCase("INICIAR CHAT")) {
-                Usuario.getInstance().getSalida().println("350");
+            } else if (comando.equalsIgnoreCase("INICIAR CHAT")) {
+                Usuario.getInstance().getSalida().println(Codigos.INICIAR_CHAT);
                 ControladorChat.getInstance().nuevaVentana();
                 this.vista.deseleccionar();
+
+            } else if (comando.equalsIgnoreCase("ACTUALIZAR LISTA")) {
+                this.actualizarListaUsuarios();
             }
         } catch (UnknownHostException ex1) {
         } catch (IOException ex2) {
         }
 
+    }
+
+    public void actualizarListaUsuarios() throws IOException {
+        Usuario.getInstance().getSalida().println(Codigos.ACTUALIZAR_LISTA_USUARIOS);
+        BufferedReader entrada = Usuario.getInstance().getEntrada();
+        int cantidad = Integer.parseInt(entrada.readLine());
+        this.vista.vaciarUsuariosDisponibles();
+        for (int i = 0; i < cantidad; i++) {
+            String usuario = entrada.readLine();
+            this.vista.agregarUsuarioDisponible(usuario);
+        }
     }
 
     public void agregarUsuario( String usuario ) {

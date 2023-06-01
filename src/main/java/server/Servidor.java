@@ -4,6 +4,7 @@ import client.model.CredencialesUsuario;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -43,12 +44,27 @@ public class Servidor {
         SocketUsuario socketUsuario = new SocketUsuario(socket);
         if (!this.usuarios.containsKey(socketUsuario.getUsername())) {
             System.out.println("Usuario registrado: " + socketUsuario.getUsername());
-            socketUsuario.getSalida().println("200");
+            socketUsuario.getSalida().println(Codigos.OK);
             socketUsuario.getSalida().println(this.password);
             this.usuarios.put(socketUsuario.getUsername(), socketUsuario);
             socketUsuario.start();
         } else
-            socketUsuario.getSalida().println("409");
+            socketUsuario.getSalida().println(Codigos.USERNAME_REPETIDO);
+    }
+
+    public void desconectarUsuario(String username) {
+        this.usuarios.remove(username);
+    }
+
+    public void actualizarListaUsuarios(String usuarioANotificar, PrintWriter salida) {
+        salida.println(this.usuarios.size() - 1);
+        for (Map.Entry<String, SocketUsuario> usuario : this.usuarios.entrySet()) {
+            if (usuario.getValue().getUsername() != usuarioANotificar) {
+                // Envía username, IP y Puerto
+                salida.println(usuario.getKey() + ", " + usuario.getValue().getSocket().getInetAddress() + ", " + usuario.getValue().getSocket().getPort());
+            }
+
+        }
     }
 
     public void escucharNuevosUsuarios() throws IOException {
@@ -69,7 +85,7 @@ public class Servidor {
             SocketUsuario v = entry.getValue();
 
             // Si el IP y puerto ingresados coinciden con alguno, los vincula (setea el interlocutor).
-            if (v.isEscuchando() && v.getSocket().getInetAddress().getHostAddress().equals(IP) && v.getSocket().getPort() == puerto) {
+            if (v.isEscuchando() && v.getInterlocutor() == null && v.getSocket().getInetAddress().getHostAddress().equals(IP) && v.getSocket().getPort() == puerto) {
                 v.setInterlocutor(username);
                 usernameInterlocutor = v.getUsername();
                 v.getSalida().println(username);
@@ -80,13 +96,13 @@ public class Servidor {
 
     public void cerrarChat(String username) {
         SocketUsuario usuario = this.usuarios.get(username);
-        usuario.getSalida().println("504");
+        usuario.getSalida().println(Codigos.CERRAR_CHAT);
     }
 
     public void enviarMensaje(String username, String mensaje) {
         SocketUsuario usuario = this.usuarios.get(username);
         System.out.println("Enviando mensaje a " + username + "...");
-        usuario.getSalida().println("351");
+        usuario.getSalida().println(Codigos.NUEVO_MENSAJE);
         usuario.getSalida().println(mensaje);
     }
 

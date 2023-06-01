@@ -5,6 +5,7 @@ import client.view.IVista;
 import client.view.VentanaChat;
 import client.view.VentanaPrincipal;
 import client.view.VentanaRegistro;
+import server.Codigos;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -42,11 +43,11 @@ public class ControladorRegistro  implements ActionListener  {
 
                 Usuario.getInstance().registrarseEnServidor(ip, puertoServer, usuario, puertoUsuario);
 
-                int msg = Integer.parseInt(Usuario.getInstance().getEntrada().readLine());
+                String msg = Usuario.getInstance().getEntrada().readLine();
 
-                if (msg == 409)
+                if (msg.equals(Codigos.USERNAME_REPETIDO.name()))
                     JOptionPane.showMessageDialog(null, "Username ya registrado. Elija uno nuevo.");
-                else if (msg == 200) {
+                else if (msg.equals(Codigos.OK.name())) {
                     Usuario.getInstance().setPassword(Usuario.getInstance().getEntrada().readLine());
                     ((VentanaRegistro) vista).dispose();
                     ControladorPrincipal.getInstance().getVista().abrirVentana();

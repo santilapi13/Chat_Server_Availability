@@ -191,6 +191,16 @@ public class VentanaRegistro extends JFrame implements IVista, KeyListener, Mous
     }
 
     @Override
+    public void agregarUsuarioDisponible(String usuario) {
+
+    }
+
+    @Override
+    public void vaciarUsuariosDisponibles() {
+
+    }
+
+    @Override
     public void keyTyped(KeyEvent e) {
 
     }
