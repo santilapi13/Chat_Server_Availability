@@ -1,25 +1,27 @@
 package server;
 
-import client.model.CredencialesUsuario;
+import server.disponibilidad.SocketMonitor;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
 public class Servidor {
+    // TODO: Conectar con Monitor (ver como se pasan las IP y puerto)
+    // TODO: Ver como se pasan datos de un server al otro para mantener datos actualizados.
+    // TODO: Se tiene q pasar a los usuarios la info del server secundario
+    // TODO: En caso de que el primario falle, los usuarios deben usar Reintento para verificar que se haya caido y conectarse al server secundario.
     private HashMap<String, SocketUsuario> usuarios = new HashMap<String, SocketUsuario>();
     private ServerSocket socketServer;
     private static Servidor instance;
     private int puerto;
-
+    private boolean primario;
+    private SocketMonitor monitor;
     private String password = generarNumero();
 
     public static Servidor getInstance() throws IOException {
@@ -29,6 +31,7 @@ public class Servidor {
     }
 
     private Servidor() {
+        this.primario = true;
     }
 
     public HashMap<String, SocketUsuario> getUsuarios() {
@@ -38,6 +41,18 @@ public class Servidor {
     public void setPuerto(int puerto) throws IOException {
         this.puerto = puerto;
         this.socketServer = new ServerSocket(puerto);
+    }
+
+    public boolean isPrimario() {
+        return this.primario;
+    }
+
+    public void setPrimario(boolean primario) {
+        this.primario = primario;
+    }
+
+    public SocketMonitor getMonitor() {
+        return this.monitor;
     }
 
     public void registrarUsuario(Socket socket) throws IOException {

@@ -56,7 +56,7 @@ public class ControladorRegistro  implements ActionListener  {
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex);
         } catch (IOException e1) {
-            System.out.println("Error al conectarse al servidor");
+            JOptionPane.showMessageDialog(null, "IP o puertos de servidor incorrectos.");
         }
 
     }
