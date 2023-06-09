@@ -6,10 +6,8 @@ import server.Codigos;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-import javax.swing.*;
 import java.io.*;
 import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -21,7 +19,8 @@ import java.util.Base64;
 
 public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorConexion, GestorSeguridad {
     private CredencialesUsuario credencialesUsuario;
-    private Socket socket;
+    private Socket socketPrimario;
+    private Socket socketSecundario;
     private InputStreamReader entradaSocket;
     private PrintWriter salida;
     private BufferedReader entrada;
@@ -65,8 +64,11 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
     public void setUsername(String username) {
         this.credencialesUsuario.setUsername(username);
     }
-    public Socket getSocket() {
-        return this.socket;
+    public Socket getSocketPrimario() {
+        return this.socketPrimario;
+    }
+    public Socket getSocketSecundario() {
+        return this.socketSecundario;
     }
     public SesionChat getSesionActual() {
         return sesionChatActual;
@@ -94,9 +96,17 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
 
     public void registrarseEnServidor(String IP, int puertoServer, String usuario, int puertoUsuario) throws IOException {
         this.credencialesUsuario.setPuerto(puertoUsuario);
-        this.socket = new Socket(IP, puertoServer, null, puertoUsuario);
+        this.socketPrimario = new Socket(IP, puertoServer, null, puertoUsuario);
         this.credencialesUsuario.setUsername(usuario);
         iniciarESSockets();
+    }
+
+    public void conectarseServerSecundario() throws IOException {
+        String[] msg = this.entrada.readLine().split(" ");
+        System.out.println("Server secundario: " + msg[0] + " " + msg[1]);
+        this.socketSecundario = new Socket(msg[0], Integer.parseInt(msg[1]));
+        PrintWriter salidaSecundario = new PrintWriter(socketSecundario.getOutputStream(), true);
+        salidaSecundario.println(this.credencialesUsuario.getUsername());
     }
 
     /**
@@ -107,9 +117,9 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
      * @throws IOException: Si hay un error al iniciar los streams de entrada y salida del socket.
      */
     private void iniciarESSockets() throws IOException {
-        this.entradaSocket = new InputStreamReader(socket.getInputStream());
+        this.entradaSocket = new InputStreamReader(socketPrimario.getInputStream());
         this.entrada = new BufferedReader(entradaSocket);
-        this.salida = new PrintWriter(socket.getOutputStream(), true);
+        this.salida = new PrintWriter(socketPrimario.getOutputStream(), true);
         this.salida.println(this.credencialesUsuario.getUsername());
     }
 
@@ -137,7 +147,7 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
         String IP = credencialesUsuarioReceptor.getIP();
 
         if (IP.equals("localhost")){
-            InetAddress localAddress = socket.getLocalAddress();
+            InetAddress localAddress = socketPrimario.getLocalAddress();
             IP = localAddress.getHostAddress();
         }
 
@@ -149,7 +159,7 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
         String usernameRemoto = this.entrada.readLine();
         System.out.println("Usuario remoto: " + usernameRemoto);
         if (this.escuchando || this.solicitando) {
-            this.sesionChatActual = new SesionChat(this.credencialesUsuario, new CredencialesUsuario(this.socket.getInetAddress().toString(), this.socket.getPort(), usernameRemoto));
+            this.sesionChatActual = new SesionChat(this.credencialesUsuario, new CredencialesUsuario(this.socketPrimario.getInetAddress().toString(), this.socketPrimario.getPort(), usernameRemoto));
             if (this.solicitando)
                 ControladorChat.getInstance().nuevaVentana();
             else

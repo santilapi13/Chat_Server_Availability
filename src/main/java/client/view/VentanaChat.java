@@ -47,7 +47,7 @@ public class VentanaChat extends JFrame implements IVista, KeyListener {
         JPanel panel_1 = new JPanel();
         contentPane.add(panel_1, BorderLayout.NORTH);
 
-        JLabel lblNewLabel = new JLabel(Usuario.getInstance().getSesionActual().getRemoto().getUsername() + " " + Usuario.getInstance().getSocket().getInetAddress().toString());
+        JLabel lblNewLabel = new JLabel(Usuario.getInstance().getSesionActual().getRemoto().getUsername() + " " + Usuario.getInstance().getSocketPrimario().getInetAddress().toString());
         lblNewLabel.setHorizontalAlignment(SwingConstants.CENTER);
         lblNewLabel.setFont(new Font("Tahoma", Font.BOLD, 11));
 

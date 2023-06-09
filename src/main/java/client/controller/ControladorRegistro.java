@@ -49,6 +49,7 @@ public class ControladorRegistro  implements ActionListener  {
                     JOptionPane.showMessageDialog(null, "Username ya registrado. Elija uno nuevo.");
                 else if (msg.equals(Codigos.OK.name())) {
                     Usuario.getInstance().setPassword(Usuario.getInstance().getEntrada().readLine());
+                    Usuario.getInstance().conectarseServerSecundario();
                     ((VentanaRegistro) vista).dispose();
                     ControladorPrincipal.getInstance().getVista().abrirVentana();
                 }

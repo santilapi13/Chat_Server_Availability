@@ -4,6 +4,7 @@ import server.disponibilidad.SocketMonitor;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -14,10 +15,9 @@ import java.util.Random;
 public class Servidor {
     // TODO: Conectar con Monitor (ver como se pasan las IP y puerto)
     // TODO: Ver como se pasan datos de un server al otro para mantener datos actualizados.
-    // TODO: Se tiene q pasar a los usuarios la info del server secundario
-    // TODO: En caso de que el primario falle, los usuarios deben usar Reintento para verificar que se haya caido y conectarse al server secundario.
     private HashMap<String, SocketUsuario> usuarios = new HashMap<String, SocketUsuario>();
     private ServerSocket socketServer;
+    private Socket serverRedundante;
     private static Servidor instance;
     private int puerto;
     private boolean primario;
@@ -55,14 +55,36 @@ public class Servidor {
         return this.monitor;
     }
 
+    public void conectarConSecundario(String IP, int puertoSecundario) throws IOException {
+        System.out.println("Solicitando conectarse con servidor secundario en IP " + IP + " y puerto " + puertoSecundario + "...");
+        this.serverRedundante = new Socket(IP, puertoSecundario);
+        System.out.println("Conexion establecida con el servidor secundario.");
+    }
+
+    public void conectarConPrimario() throws IOException {
+        System.out.println("Esperando conexion desde servidor primario en puerto " + this.socketServer.getLocalPort() + "...");
+        this.serverRedundante = this.socketServer.accept();
+        System.out.println("Conexion establecida con el servidor primario.");
+    }
+
+    public void conectarConMonitor() throws IOException {
+        Socket socket = this.socketServer.accept();
+        this.monitor = new SocketMonitor(socket);
+    }
+
     public void registrarUsuario(Socket socket) throws IOException {
         SocketUsuario socketUsuario = new SocketUsuario(socket);
         if (!this.usuarios.containsKey(socketUsuario.getUsername())) {
             System.out.println("Usuario registrado: " + socketUsuario.getUsername());
-            socketUsuario.getSalida().println(Codigos.OK);
-            socketUsuario.getSalida().println(this.password);
-            this.usuarios.put(socketUsuario.getUsername(), socketUsuario);
-            socketUsuario.start();
+            if (this.primario) {
+                socketUsuario.getSalida().println(Codigos.OK);
+                socketUsuario.getSalida().println(this.password);
+                socketUsuario.getSalida().println(this.serverRedundante.getInetAddress().getHostAddress() + " " + this.serverRedundante.getPort());  // Se pasa la info del server secundaria al usuario
+                this.usuarios.put(socketUsuario.getUsername(), socketUsuario);
+                socketUsuario.start();
+            } else
+                this.usuarios.put(socketUsuario.getUsername(), socketUsuario);
+
         } else
             socketUsuario.getSalida().println(Codigos.USERNAME_REPETIDO);
     }
