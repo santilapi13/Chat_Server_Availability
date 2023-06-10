@@ -61,7 +61,7 @@ public class ControladorPrincipal implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         String comando = e.getActionCommand();
         try {
-            if (comando.equalsIgnoreCase("")) {
+            if (comando.equalsIgnoreCase("")) { // activar/desactivar modo escucha
                 if (!Usuario.getInstance().isEscuchando()) {
                     Thread hilo = new Thread(Usuario.getInstance());
                     hilo.start();

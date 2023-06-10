@@ -1,10 +1,9 @@
 package server;
 
-import server.disponibilidad.SocketMonitor;
+import server.server_primario.SocketMonitor;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -13,15 +12,14 @@ import java.util.Map;
 import java.util.Random;
 
 public class Servidor {
-    // TODO: Conectar con Monitor (ver como se pasan las IP y puerto)
     // TODO: Ver como se pasan datos de un server al otro para mantener datos actualizados.
     private HashMap<String, SocketUsuario> usuarios = new HashMap<String, SocketUsuario>();
     private ServerSocket socketServer;
+    private SocketMonitor monitor;
     private Socket serverRedundante;
     private static Servidor instance;
     private int puerto;
     private boolean primario;
-    private SocketMonitor monitor;
     private String password = generarNumero();
 
     public static Servidor getInstance() throws IOException {
@@ -32,6 +30,7 @@ public class Servidor {
 
     private Servidor() {
         this.primario = true;
+        this.serverRedundante = null;
     }
 
     public HashMap<String, SocketUsuario> getUsuarios() {
@@ -51,14 +50,21 @@ public class Servidor {
         this.primario = primario;
     }
 
-    public SocketMonitor getMonitor() {
-        return this.monitor;
-    }
-
-    public void conectarConSecundario(String IP, int puertoSecundario) throws IOException {
-        System.out.println("Solicitando conectarse con servidor secundario en IP " + IP + " y puerto " + puertoSecundario + "...");
-        this.serverRedundante = new Socket(IP, puertoSecundario);
-        System.out.println("Conexion establecida con el servidor secundario.");
+    public void conectarConSecundario(String IP, int puertoSecundario) {
+        System.out.println("Esperando respuesta de servidor secundario...");
+        while (this.serverRedundante == null) {
+            try {
+                this.serverRedundante = new Socket(IP, puertoSecundario);
+                System.out.println("Conexion establecida con el servidor secundario.");
+            } catch (IOException e) {
+                System.out.println("No se pudo conectar con el servidor secundario. Reintentando en 5 segundos...");
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException interruptedException) {
+                    interruptedException.printStackTrace();
+                }
+            }
+        }
     }
 
     public void conectarConPrimario() throws IOException {
@@ -68,8 +74,10 @@ public class Servidor {
     }
 
     public void conectarConMonitor() throws IOException {
+        System.out.println("Esperando conexion desde el monitor en puerto " + this.socketServer.getLocalPort() + "...");
         Socket socket = this.socketServer.accept();
         this.monitor = new SocketMonitor(socket);
+        System.out.println("Conexion establecida con el monitor.");
     }
 
     public void registrarUsuario(Socket socket) throws IOException {
@@ -79,7 +87,8 @@ public class Servidor {
             if (this.primario) {
                 socketUsuario.getSalida().println(Codigos.OK);
                 socketUsuario.getSalida().println(this.password);
-                socketUsuario.getSalida().println(this.serverRedundante.getInetAddress().getHostAddress() + " " + this.serverRedundante.getPort());  // Se pasa la info del server secundaria al usuario
+                if (serverRedundante != null)
+                    socketUsuario.getSalida().println(this.serverRedundante.getInetAddress().getHostAddress() + " " + this.serverRedundante.getPort());  // Se pasa la info del server secundaria al usuario
                 this.usuarios.put(socketUsuario.getUsername(), socketUsuario);
                 socketUsuario.start();
             } else

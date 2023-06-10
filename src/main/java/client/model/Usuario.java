@@ -157,13 +157,15 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
 
     public void iniciarSesionChat() throws IOException {
         String usernameRemoto = this.entrada.readLine();
-        System.out.println("Usuario remoto: " + usernameRemoto);
-        if (this.escuchando || this.solicitando) {
-            this.sesionChatActual = new SesionChat(this.credencialesUsuario, new CredencialesUsuario(this.socketPrimario.getInetAddress().toString(), this.socketPrimario.getPort(), usernameRemoto));
-            if (this.solicitando)
-                ControladorChat.getInstance().nuevaVentana();
-            else
-                ControladorPrincipal.getInstance().agregarUsuario(usernameRemoto);
+        if (!usernameRemoto.equals(Codigos.NADIE_SOLICITO.name())) {
+            System.out.println("Usuario remoto: " + usernameRemoto);
+            if (this.escuchando || this.solicitando) {
+                this.sesionChatActual = new SesionChat(this.credencialesUsuario, new CredencialesUsuario(this.socketPrimario.getInetAddress().toString(), this.socketPrimario.getPort(), usernameRemoto));
+                if (this.solicitando)
+                    ControladorChat.getInstance().nuevaVentana();
+                else
+                    ControladorPrincipal.getInstance().agregarUsuario(usernameRemoto);
+            }
         }
     }
 

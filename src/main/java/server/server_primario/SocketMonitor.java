@@ -1,4 +1,4 @@
-package server.disponibilidad;
+package server.server_primario;
 
 import java.io.BufferedReader;
 import java.io.IOException;

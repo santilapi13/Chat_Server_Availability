@@ -90,6 +90,7 @@ public class SocketUsuario extends Thread {
         } else if (mensaje.equals(Codigos.DESACTIVAR_ESCUCHA.name())) {
             System.out.println("Usuario " + this.username + " desactivo el modo escucha.");
             this.escuchando = false;
+            this.salida.println(Codigos.NADIE_SOLICITO);
 
         // Si el usuario solicito actualizar la lista de usuarios.
         } else if (mensaje.equals(Codigos.ACTUALIZAR_LISTA_USUARIOS.name())) {
