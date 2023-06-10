@@ -107,6 +107,7 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
         this.socketSecundario = new Socket(msg[0], Integer.parseInt(msg[1]));
         PrintWriter salidaSecundario = new PrintWriter(socketSecundario.getOutputStream(), true);
         salidaSecundario.println(this.credencialesUsuario.getUsername());
+        Resincronizador.getInstance().start();
     }
 
     /**
@@ -121,6 +122,22 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
         this.entrada = new BufferedReader(entradaSocket);
         this.salida = new PrintWriter(socketPrimario.getOutputStream(), true);
         this.salida.println(this.credencialesUsuario.getUsername());
+    }
+
+    public void cambiarASecundario() throws IOException {
+        this.entradaSocket = new InputStreamReader(socketSecundario.getInputStream());
+        this.entrada = new BufferedReader(entradaSocket);
+        this.salida = new PrintWriter(socketSecundario.getOutputStream(), true);
+    }
+
+    public void resincronizar() throws IOException {
+        // Avisa si estaba escuchando, y si estaba en chat
+        if (this.sesionChatActual != null)
+            this.salida.println(this.escuchando + " " + this.sesionChatActual.getRemoto().getUsername());
+        else
+            this.salida.println(this.escuchando + " " + null);
+        if (this.sesionChatActual == null)
+            ControladorPrincipal.getInstance().actualizarListaUsuarios();
     }
 
      @Override

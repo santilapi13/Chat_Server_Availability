@@ -79,9 +79,9 @@ public class ControladorChat implements ActionListener, Runnable  {
 
     @Override
     public void run() {
-        try {
-            this.conexionEstablecida = true;
-            while (conexionEstablecida) {
+        this.conexionEstablecida = true;
+        while (conexionEstablecida) {
+            try {
                 String codigo = null;
 
                 if (!cerroVentana)
@@ -95,7 +95,11 @@ public class ControladorChat implements ActionListener, Runnable  {
                 } else if (codigo.equals(Codigos.NUEVO_MENSAJE.name())) {
                     vista.agregarMensaje(Usuario.getInstance().getSesionActual().getRemoto().getUsername() + ": " + Usuario.getInstance().recibirMensaje());
                 }
+            } catch (IOException e) {
+                System.out.println("Resincronizando chat...");
             }
+        }
+        try {
             if (!cerroVentana) {
                 Usuario.getInstance().getSalida().println(Codigos.CERRAR_CHAT);
                 Usuario.getInstance().desconectar();
@@ -104,9 +108,10 @@ public class ControladorChat implements ActionListener, Runnable  {
                 java.awt.Toolkit.getDefaultToolkit().beep();
                 ((VentanaChat) vista).dispose();
             }
-            cerroVentana = false;
-        } catch (IOException e) {
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
+        cerroVentana = false;
     }
 
 }

@@ -131,7 +131,25 @@ public class SocketUsuario extends Thread {
             System.out.println("Usuario " + this.username + " quiere enviar un mensaje.");
             Servidor.getInstance().enviarMensaje(this.interlocutor, mensaje);
         }
+    }
 
+    public void notificarCaida() throws IOException {
+        this.salida.println(Codigos.RESINCRONIZAR);
+        this.resincronizar();
+    }
+
+    private void resincronizar() throws IOException {
+        try {
+            String[] mensaje = this.entrada.readLine().split(" ");
+            this.escuchando = Boolean.parseBoolean(mensaje[0]);
+            this.enChat = !mensaje[1].equals("null");
+            if (this.enChat)
+                this.interlocutor = mensaje[1];
+            this.start();
+        } catch (IOException e) {
+            // TODO: probar si funciona (se debe desconectar el usuario si se desconecto durante el primario)
+            Servidor.getInstance().desconectarUsuario(this.username);
+        }
     }
 
 }

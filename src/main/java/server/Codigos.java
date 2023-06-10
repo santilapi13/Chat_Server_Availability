@@ -11,5 +11,7 @@ public enum Codigos {
      OK,   // 200
      NO_ENCONTRADO, // 404
      ACTUALIZAR_LISTA_USUARIOS,
-     NADIE_SOLICITO
+     NADIE_SOLICITO,
+     RESINCRONIZAR,
+     ACTIVAR_SECUNDARIO
 }

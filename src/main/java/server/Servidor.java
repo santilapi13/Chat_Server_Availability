@@ -1,6 +1,6 @@
 package server;
 
-import server.server_primario.SocketMonitor;
+import server.server_secundario.NotificadorCaida;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -12,10 +12,10 @@ import java.util.Map;
 import java.util.Random;
 
 public class Servidor {
-    // TODO: Ver como se pasan datos de un server al otro para mantener datos actualizados.
+    // TODO: Plantear reinicio del servidor primario tras su caida.
     private HashMap<String, SocketUsuario> usuarios = new HashMap<String, SocketUsuario>();
     private ServerSocket socketServer;
-    private SocketMonitor monitor;
+    private NotificadorCaida monitor;
     private Socket serverRedundante;
     private static Servidor instance;
     private int puerto;
@@ -40,6 +40,10 @@ public class Servidor {
     public void setPuerto(int puerto) throws IOException {
         this.puerto = puerto;
         this.socketServer = new ServerSocket(puerto);
+    }
+
+    public NotificadorCaida getMonitor() {
+        return monitor;
     }
 
     public boolean isPrimario() {
@@ -76,8 +80,9 @@ public class Servidor {
     public void conectarConMonitor() throws IOException {
         System.out.println("Esperando conexion desde el monitor en puerto " + this.socketServer.getLocalPort() + "...");
         Socket socket = this.socketServer.accept();
-        this.monitor = new SocketMonitor(socket);
+        this.monitor = new NotificadorCaida(socket);
         System.out.println("Conexion establecida con el monitor.");
+        this.monitor.start();
     }
 
     public void registrarUsuario(Socket socket) throws IOException {

@@ -1,13 +1,15 @@
 package server.monitor;
 
+import server.Codigos;
+
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class Monitor {
-    // TODO: Ver como activar el servidor secundario
     private boolean primarioVivo;
     private int puerto;
     private Timer heartbeatTimer;
@@ -37,7 +39,7 @@ public class Monitor {
     public void empezarMonitoreo() throws IOException {
         ServerSocket conexionPrimario = new ServerSocket(this.puerto);
         while (primarioVivo) {
-            this.heartbeatTimer.schedule(new HeartbeatTask(), 5000);
+            this.heartbeatTimer.schedule(new HeartbeatTask(), 3000);
 
             conexionPrimario.accept();
             this.recibirHeartbeat();
@@ -51,8 +53,14 @@ public class Monitor {
     }
 
     public void activarSecundario() {
-        System.out.println("No se recibio latido del servidor primario en los ultimos 5 segs.");
+        System.out.println("No se recibio latido del servidor primario en los ultimos 3 segs.");
         System.out.println("Activando servidor secundario...");
+        try {
+            PrintWriter salida = new PrintWriter(this.serverSecundario.getOutputStream(), true);
+            salida.println(Codigos.ACTIVAR_SECUNDARIO);
+        } catch (IOException e) {
+            System.out.println("No se pudo activar el servidor secundario.");
+        }
     }
 
     private class HeartbeatTask extends TimerTask {
