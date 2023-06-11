@@ -38,6 +38,7 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
         this.escuchando = false;
         this.sesionesAnteriores = new ArrayList<>();
         this.sesionChatActual = null;
+        this.socketSecundario = null;
     }
     public static Usuario getInstance() throws UnknownHostException {
         if (instance == null)
@@ -102,12 +103,14 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
     }
 
     public void conectarseServerSecundario() throws IOException {
-        String[] msg = this.entrada.readLine().split(" ");
-        System.out.println("Server secundario: " + msg[0] + " " + msg[1]);
-        this.socketSecundario = new Socket(msg[0], Integer.parseInt(msg[1]));
-        PrintWriter salidaSecundario = new PrintWriter(socketSecundario.getOutputStream(), true);
-        salidaSecundario.println(this.credencialesUsuario.getUsername());
-        Resincronizador.getInstance().start();
+        if (this.socketSecundario == null) {
+            String[] msg = this.entrada.readLine().split(" ");
+            System.out.println("Server secundario: " + msg[0] + " " + msg[1]);
+            this.socketSecundario = new Socket(msg[0], Integer.parseInt(msg[1]));
+            PrintWriter salidaSecundario = new PrintWriter(socketSecundario.getOutputStream(), true);
+            salidaSecundario.println(this.credencialesUsuario.getUsername());
+            Resincronizador.getInstance().start();
+        }
     }
 
     /**
@@ -128,6 +131,13 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
         this.entradaSocket = new InputStreamReader(socketSecundario.getInputStream());
         this.entrada = new BufferedReader(entradaSocket);
         this.salida = new PrintWriter(socketSecundario.getOutputStream(), true);
+    }
+
+    public void cambiarAPrimario() throws IOException {
+        this.socketPrimario = new Socket(socketPrimario.getInetAddress(), socketPrimario.getPort(), null, this.getPuerto());
+        this.entradaSocket = new InputStreamReader(socketPrimario.getInputStream());
+        this.entrada = new BufferedReader(entradaSocket);
+        this.salida = new PrintWriter(socketPrimario.getOutputStream(), true);
     }
 
     public void resincronizar() throws IOException {
@@ -256,5 +266,14 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String chequeoReinicioPrimario(String msg) throws IOException {
+        if (msg.equals(Codigos.REINICIAR_PRIMARIO.name())) {
+            msg = this.getEntrada().readLine();
+            this.cambiarAPrimario();
+            this.resincronizar();
+        }
+        return msg;
     }
 }

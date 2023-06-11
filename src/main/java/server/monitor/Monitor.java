@@ -44,6 +44,13 @@ public class Monitor {
             conexionPrimario.accept();
             this.recibirHeartbeat();
         }
+
+        conexionPrimario.accept();
+        primarioVivo = true;
+        PrintWriter salida = new PrintWriter(this.serverSecundario.getOutputStream(), true);
+        salida.println(Codigos.REINICIAR_PRIMARIO);
+        conexionPrimario.close();
+        this.empezarMonitoreo();
     }
 
     public void recibirHeartbeat() {

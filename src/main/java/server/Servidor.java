@@ -2,7 +2,9 @@ package server;
 
 import server.server_secundario.NotificadorCaida;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -14,13 +16,15 @@ import java.util.Random;
 public class Servidor {
     // TODO: Plantear reinicio del servidor primario tras su caida.
     private HashMap<String, SocketUsuario> usuarios = new HashMap<String, SocketUsuario>();
-    private ServerSocket socketServer;
+    private ServerSocket socketServerNuevosUsuarios;
+    private ServerSocket socketServerSecundario;
     private NotificadorCaida monitor;
     private Socket serverRedundante;
     private static Servidor instance;
     private int puerto;
     private boolean primario;
     private String password = generarNumero();
+    private int usuariosAResincronizar;
 
     public static Servidor getInstance() throws IOException {
         if (instance == null)
@@ -31,6 +35,7 @@ public class Servidor {
     private Servidor() {
         this.primario = true;
         this.serverRedundante = null;
+        this.usuariosAResincronizar = -1;
     }
 
     public HashMap<String, SocketUsuario> getUsuarios() {
@@ -39,7 +44,8 @@ public class Servidor {
 
     public void setPuerto(int puerto) throws IOException {
         this.puerto = puerto;
-        this.socketServer = new ServerSocket(puerto);
+        this.socketServerNuevosUsuarios = new ServerSocket(puerto);
+        this.socketServerSecundario = new ServerSocket(puerto + 1);
     }
 
     public NotificadorCaida getMonitor() {
@@ -55,11 +61,12 @@ public class Servidor {
     }
 
     public void conectarConSecundario(String IP, int puertoSecundario) {
-        System.out.println("Esperando respuesta de servidor secundario...");
+        System.out.println("Enviando solicitud al servidor secundario...");
         while (this.serverRedundante == null) {
             try {
-                this.serverRedundante = new Socket(IP, puertoSecundario);
-                System.out.println("Conexion establecida con el servidor secundario.");
+                this.serverRedundante = new Socket(IP, puertoSecundario + 1);
+                System.out.println(serverRedundante.getInetAddress() + " " + serverRedundante.getPort());
+                System.out.println("Conexion establecida con el servidor secundario en puerto " + puertoSecundario + 1 + ".");
             } catch (IOException e) {
                 System.out.println("No se pudo conectar con el servidor secundario. Reintentando en 5 segundos...");
                 try {
@@ -72,14 +79,14 @@ public class Servidor {
     }
 
     public void conectarConPrimario() throws IOException {
-        System.out.println("Esperando conexion desde servidor primario en puerto " + this.socketServer.getLocalPort() + "...");
-        this.serverRedundante = this.socketServer.accept();
+        System.out.println("Esperando solicitud del servidor primario en puerto " + this.puerto + 1 + "...");
+        this.serverRedundante = this.socketServerSecundario.accept();
         System.out.println("Conexion establecida con el servidor primario.");
     }
 
     public void conectarConMonitor() throws IOException {
-        System.out.println("Esperando conexion desde el monitor en puerto " + this.socketServer.getLocalPort() + "...");
-        Socket socket = this.socketServer.accept();
+        System.out.println("Esperando conexion desde el monitor en puerto " + this.socketServerNuevosUsuarios.getLocalPort() + "...");
+        Socket socket = this.socketServerNuevosUsuarios.accept();
         this.monitor = new NotificadorCaida(socket);
         System.out.println("Conexion establecida con el monitor.");
         this.monitor.start();
@@ -95,6 +102,10 @@ public class Servidor {
                 if (serverRedundante != null)
                     socketUsuario.getSalida().println(this.serverRedundante.getInetAddress().getHostAddress() + " " + this.serverRedundante.getPort());  // Se pasa la info del server secundaria al usuario
                 this.usuarios.put(socketUsuario.getUsername(), socketUsuario);
+                if (usuariosAResincronizar > 0) {
+                    socketUsuario.resincronizar();
+                    usuariosAResincronizar--;
+                }
                 socketUsuario.start();
             } else
                 this.usuarios.put(socketUsuario.getUsername(), socketUsuario);
@@ -119,8 +130,8 @@ public class Servidor {
     }
 
     public void escucharNuevosUsuarios() throws IOException {
-        Socket socket = socketServer.accept();
-        System.out.println("Usuario con IP " + socket.getInetAddress().getHostAddress() + " intenta registrarse");
+        Socket socket = socketServerNuevosUsuarios.accept();
+        System.out.println("Usuario " + socket.getInetAddress().getHostAddress() + " : " + socket.getPort() + " intenta registrarse");
         this.registrarUsuario(socket);
     }
 
@@ -167,6 +178,17 @@ public class Servidor {
         }
 
         return sb.toString();
+    }
+
+    public void informarUsuariosAlPrimario() throws IOException {
+        PrintWriter salida = new PrintWriter(this.serverRedundante.getOutputStream(), true);
+        salida.println(this.usuarios.size());
+    }
+
+    public void recibirUsuariosAResincronizar() throws IOException {
+        InputStreamReader entradaSocket = new InputStreamReader(this.serverRedundante.getInputStream());
+        BufferedReader entrada = new BufferedReader(entradaSocket);
+        this.usuariosAResincronizar = Integer.parseInt(entrada.readLine());
     }
 
 }

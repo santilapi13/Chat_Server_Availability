@@ -78,6 +78,8 @@ public class ControladorPrincipal implements ActionListener {
 
                 String respuesta = Usuario.getInstance().getEntrada().readLine();
 
+                respuesta = Usuario.getInstance().chequeoReinicioPrimario(respuesta);
+
                 // Solicitud aceptada
                 if (respuesta.equals(Codigos.OK.name())) {
                     Usuario.getInstance().iniciarSesionChat();
@@ -105,10 +107,12 @@ public class ControladorPrincipal implements ActionListener {
     public void actualizarListaUsuarios() throws IOException {
         Usuario.getInstance().getSalida().println(Codigos.ACTUALIZAR_LISTA_USUARIOS);
         BufferedReader entrada = Usuario.getInstance().getEntrada();
-        int cantidad = Integer.parseInt(entrada.readLine());
+        String msg = Usuario.getInstance().chequeoReinicioPrimario(entrada.readLine());
+        int cantidad = Integer.parseInt(msg);
         this.vista.vaciarUsuariosDisponibles();
         for (int i = 0; i < cantidad; i++) {
-            String usuario = entrada.readLine();
+            msg = Usuario.getInstance().chequeoReinicioPrimario(entrada.readLine());
+            String usuario = msg;
             this.vista.agregarUsuarioDisponible(usuario);
         }
     }

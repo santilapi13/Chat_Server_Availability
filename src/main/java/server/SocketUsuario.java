@@ -138,7 +138,7 @@ public class SocketUsuario extends Thread {
         this.resincronizar();
     }
 
-    private void resincronizar() throws IOException {
+    public void resincronizar() throws IOException {
         try {
             String[] mensaje = this.entrada.readLine().split(" ");
             this.escuchando = Boolean.parseBoolean(mensaje[0]);
@@ -150,6 +150,10 @@ public class SocketUsuario extends Thread {
             // TODO: probar si funciona (se debe desconectar el usuario si se desconecto durante el primario)
             Servidor.getInstance().desconectarUsuario(this.username);
         }
+    }
+
+    public void reinicioPrimario() {
+        this.salida.println(Codigos.REINICIAR_PRIMARIO);
     }
 
 }

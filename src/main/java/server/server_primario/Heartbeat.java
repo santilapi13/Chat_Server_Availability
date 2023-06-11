@@ -34,9 +34,9 @@ public class Heartbeat extends Thread {
                 Thread.sleep(1000);
                 Socket socket = new Socket(ip, puerto);
             } catch (IOException e) {
-                System.out.println("No se pudo conectar con el monitor. Reintentando en 5 segundos...");
+                System.out.println("No se pudo conectar con el monitor. Reintentando en 3 segundos...");
                 try {
-                    Thread.sleep(4000);
+                    Thread.sleep(2000);
                 } catch (InterruptedException e1) {
                     throw new RuntimeException(e1);
                 }

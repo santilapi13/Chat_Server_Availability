@@ -87,6 +87,8 @@ public class ControladorChat implements ActionListener, Runnable  {
                 if (!cerroVentana)
                     codigo = Usuario.getInstance().getEntrada().readLine();
 
+                codigo = Usuario.getInstance().chequeoReinicioPrimario(codigo);
+
                 // Si su interlocutor salio del chat.
                 if (codigo.equals(Codigos.CERRAR_CHAT.name())) {
                     conexionEstablecida = false;

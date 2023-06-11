@@ -1,6 +1,7 @@
 package server.server_secundario;
 
 import server.Codigos;
+import server.ControladorNuevosUsuarios;
 import server.Servidor;
 import server.SocketUsuario;
 
@@ -34,6 +35,16 @@ public class NotificadorCaida extends Thread {
                     entry.getValue().notificarCaida();
                 }
                 System.out.println("Estado resincronizado");
+            }
+
+            mensaje = this.entrada.readLine();
+            if (mensaje.equals(Codigos.REINICIAR_PRIMARIO.name())) {
+                System.out.println("Servidor primario reiniciado. Resincronizando...");
+                Servidor.getInstance().conectarConPrimario();
+                Servidor.getInstance().informarUsuariosAlPrimario();
+                for (Map.Entry<String, SocketUsuario> entry : Servidor.getInstance().getUsuarios().entrySet()) {
+                    entry.getValue().reinicioPrimario();
+                }
             }
         } catch (IOException e) {}
     }
