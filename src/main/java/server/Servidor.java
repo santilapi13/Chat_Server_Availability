@@ -97,16 +97,19 @@ public class Servidor {
         if (!this.usuarios.containsKey(socketUsuario.getUsername())) {
             System.out.println("Usuario registrado: " + socketUsuario.getUsername());
             if (this.primario) {
-                socketUsuario.getSalida().println(Codigos.OK);
-                socketUsuario.getSalida().println(this.password);
-                if (serverRedundante != null)
-                    socketUsuario.getSalida().println(this.serverRedundante.getInetAddress().getHostAddress() + " " + this.serverRedundante.getPort());  // Se pasa la info del server secundaria al usuario
                 this.usuarios.put(socketUsuario.getUsername(), socketUsuario);
                 if (usuariosAResincronizar > 0) {
                     socketUsuario.resincronizar();
                     usuariosAResincronizar--;
+                } else {
+                    socketUsuario.getSalida().println(Codigos.OK);
+                    socketUsuario.getSalida().println(this.password);
+                    if (serverRedundante != null) {
+                        int puerto = this.serverRedundante.getPort() - 1;
+                        socketUsuario.getSalida().println(this.serverRedundante.getInetAddress().getHostAddress() + " " + puerto);  // Se pasa la info del server secundaria al usuario
+                    }
+                    socketUsuario.start();
                 }
-                socketUsuario.start();
             } else
                 this.usuarios.put(socketUsuario.getUsername(), socketUsuario);
 
@@ -183,12 +186,14 @@ public class Servidor {
     public void informarUsuariosAlPrimario() throws IOException {
         PrintWriter salida = new PrintWriter(this.serverRedundante.getOutputStream(), true);
         salida.println(this.usuarios.size());
+        System.out.println("Enviando cantidad de usuarios (" + this.usuarios.size() + ") al servidor primario...");
     }
 
     public void recibirUsuariosAResincronizar() throws IOException {
         InputStreamReader entradaSocket = new InputStreamReader(this.serverRedundante.getInputStream());
         BufferedReader entrada = new BufferedReader(entradaSocket);
         this.usuariosAResincronizar = Integer.parseInt(entrada.readLine());
+        System.out.println("Usuarios a resincronizar: " + this.usuariosAResincronizar);
     }
 
 }

@@ -11,6 +11,7 @@ public class SocketUsuario extends Thread {
     private String username;
     private String interlocutor;
     private Socket socket;
+    private Socket socketReinicio;
     private InputStreamReader entradaSocket;
     private PrintWriter salida;
     private BufferedReader entrada;
@@ -136,6 +137,13 @@ public class SocketUsuario extends Thread {
     public void notificarCaida() throws IOException {
         this.salida.println(Codigos.RESINCRONIZAR);
         this.resincronizar();
+        while (this.socketReinicio == null) {
+            try {
+                this.socketReinicio = new Socket(this.socket.getInetAddress(), this.socket.getPort() + 1);
+                System.out.println("Usuario " + this.username + " se conecto al socket de reinicio.");
+            } catch (IOException e) {
+            }
+        }
     }
 
     public void resincronizar() throws IOException {
@@ -147,13 +155,14 @@ public class SocketUsuario extends Thread {
                 this.interlocutor = mensaje[1];
             this.start();
         } catch (IOException e) {
-            // TODO: probar si funciona (se debe desconectar el usuario si se desconecto durante el primario)
             Servidor.getInstance().desconectarUsuario(this.username);
         }
     }
 
-    public void reinicioPrimario() {
-        this.salida.println(Codigos.REINICIAR_PRIMARIO);
+    public void reinicioPrimario() throws IOException {
+        PrintWriter salida = new PrintWriter(this.socketReinicio.getOutputStream(), true);
+        salida.println(Codigos.REINICIAR_PRIMARIO);
+        System.out.println("Usuario " + this.username + " solicito resincronizacion con servidor primario.");
     }
 
 }

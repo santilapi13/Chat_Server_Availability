@@ -28,22 +28,24 @@ public class NotificadorCaida extends Thread {
     @Override
     public void run() {
         try {
-            String mensaje = this.entrada.readLine();
-            if (mensaje.equals(Codigos.ACTIVAR_SECUNDARIO.name())) {
-                System.out.println("Servidor secundario activado");
-                for (Map.Entry<String, SocketUsuario> entry : Servidor.getInstance().getUsuarios().entrySet()) {
-                    entry.getValue().notificarCaida();
+            while (true) {
+                String mensaje = this.entrada.readLine();
+                if (mensaje.equals(Codigos.ACTIVAR_SECUNDARIO.name())) {
+                    System.out.println("Servidor secundario activado");
+                    for (Map.Entry<String, SocketUsuario> entry : Servidor.getInstance().getUsuarios().entrySet()) {
+                        entry.getValue().notificarCaida();
+                    }
+                    System.out.println("Estado resincronizado");
                 }
-                System.out.println("Estado resincronizado");
-            }
 
-            mensaje = this.entrada.readLine();
-            if (mensaje.equals(Codigos.REINICIAR_PRIMARIO.name())) {
-                System.out.println("Servidor primario reiniciado. Resincronizando...");
-                Servidor.getInstance().conectarConPrimario();
-                Servidor.getInstance().informarUsuariosAlPrimario();
-                for (Map.Entry<String, SocketUsuario> entry : Servidor.getInstance().getUsuarios().entrySet()) {
-                    entry.getValue().reinicioPrimario();
+                mensaje = this.entrada.readLine();
+                if (mensaje.equals(Codigos.REINICIAR_PRIMARIO.name())) {
+                    System.out.println("Servidor primario reiniciado. Resincronizando...");
+                    Servidor.getInstance().conectarConPrimario();
+                    Servidor.getInstance().informarUsuariosAlPrimario();
+                    for (Map.Entry<String, SocketUsuario> entry : Servidor.getInstance().getUsuarios().entrySet()) {
+                        entry.getValue().reinicioPrimario();
+                    }
                 }
             }
         } catch (IOException e) {}

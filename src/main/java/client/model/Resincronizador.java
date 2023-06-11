@@ -24,8 +24,10 @@ public class Resincronizador extends Thread {
             BufferedReader entrada = new BufferedReader(entradaSocket);
             String mensaje = entrada.readLine();
             if (mensaje.equals(Codigos.RESINCRONIZAR.name())) {
+                System.out.println("Resincronizando...");
                 Usuario.getInstance().cambiarASecundario();
                 Usuario.getInstance().resincronizar();
+                Usuario.getInstance().prepararReinicio();
             }
         } catch (IOException e) {
         }

@@ -45,12 +45,10 @@ public class ControladorRegistro  implements ActionListener  {
 
                 String msg = Usuario.getInstance().getEntrada().readLine();
 
-                msg = Usuario.getInstance().chequeoReinicioPrimario(msg);
-
                 if (msg.equals(Codigos.USERNAME_REPETIDO.name()))
                     JOptionPane.showMessageDialog(null, "Username ya registrado. Elija uno nuevo.");
                 else if (msg.equals(Codigos.OK.name())) {
-                    msg = Usuario.getInstance().chequeoReinicioPrimario(Usuario.getInstance().getEntrada().readLine());
+                    msg = Usuario.getInstance().getEntrada().readLine();
                     Usuario.getInstance().setPassword(msg);
                     Usuario.getInstance().conectarseServerSecundario();
                     ((VentanaRegistro) vista).dispose();

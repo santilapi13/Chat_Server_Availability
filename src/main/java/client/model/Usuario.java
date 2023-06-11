@@ -8,6 +8,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -28,6 +29,8 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
     private ArrayList<SesionChat> sesionesAnteriores;
     private SesionChat sesionChatActual;
     private boolean solicitando = false;
+    private String ipServidorPrimario;
+    private int puertoServidorPrimario;
 
     private String password;
 
@@ -97,6 +100,8 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
 
     public void registrarseEnServidor(String IP, int puertoServer, String usuario, int puertoUsuario) throws IOException {
         this.credencialesUsuario.setPuerto(puertoUsuario);
+        this.ipServidorPrimario = IP;
+        this.puertoServidorPrimario = puertoServer;
         this.socketPrimario = new Socket(IP, puertoServer, null, puertoUsuario);
         this.credencialesUsuario.setUsername(usuario);
         iniciarESSockets();
@@ -113,13 +118,6 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
         }
     }
 
-    /**
-     * Inicia los streams de entrada y salida del socket. Envia el username al receptor y recibe el username del usuario remoto.
-     * <b>Pre:</b> El socket debe estar conectado al usuario remoto.<br>
-     * <b>Post:</b> Se ha iniciado los streams de entrada y salida del socket. Se ha instanciado una nueva sesion con la IP, puerto y username del usuario remoto.
-     *
-     * @throws IOException: Si hay un error al iniciar los streams de entrada y salida del socket.
-     */
     private void iniciarESSockets() throws IOException {
         this.entradaSocket = new InputStreamReader(socketPrimario.getInputStream());
         this.entrada = new BufferedReader(entradaSocket);
@@ -134,10 +132,11 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
     }
 
     public void cambiarAPrimario() throws IOException {
-        this.socketPrimario = new Socket(socketPrimario.getInetAddress(), socketPrimario.getPort(), null, this.getPuerto());
+        this.socketPrimario = new Socket(ipServidorPrimario, puertoServidorPrimario, null, this.getPuerto());
         this.entradaSocket = new InputStreamReader(socketPrimario.getInputStream());
         this.entrada = new BufferedReader(entradaSocket);
         this.salida = new PrintWriter(socketPrimario.getOutputStream(), true);
+        this.salida.println(this.credencialesUsuario.getUsername());
     }
 
     public void resincronizar() throws IOException {
@@ -148,6 +147,33 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
             this.salida.println(this.escuchando + " " + null);
         if (this.sesionChatActual == null)
             ControladorPrincipal.getInstance().actualizarListaUsuarios();
+    }
+
+    public void prepararReinicio() throws IOException {
+        try {
+            // Reutiliza el socketPrimario para comprobar el reinicio
+            this.socketPrimario.close();
+            ServerSocket serverSocket = new ServerSocket(this.socketSecundario.getLocalPort() + 1);
+            this.socketPrimario = serverSocket.accept();
+            System.out.println("Conectado con socket de reinicio");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        new Thread(() -> {
+            InputStreamReader entradaSocket = null;
+            try {
+                entradaSocket = new InputStreamReader(socketPrimario.getInputStream());
+                BufferedReader entrada = new BufferedReader(entradaSocket);
+                String mensaje = entrada.readLine();
+                if (mensaje.equals(Codigos.REINICIAR_PRIMARIO.name())) {
+                    System.out.println("Reinicio detectado. Resincronizando con servidor principal...");
+                    this.cambiarAPrimario();
+                    this.resincronizar();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
     }
 
      @Override
@@ -196,11 +222,6 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
         }
     }
 
-    /**
-     * Envia un mensaje al usuario remoto.<br>
-     * @param mensaje: El mensaje a enviar.
-     * @throws IOException: Si hay un error al enviar el mensaje.
-     */
     public void enviarMensaje(String mensaje) throws IOException {
 
         String mensajeEncriptado;
@@ -225,12 +246,6 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
         return Base64.getEncoder().encodeToString(bytesEncriptados);
     }
 
-
-    /**
-     * Recibe un mensaje del usuario remoto.<br>
-     * @return El mensaje recibido.
-     * @throws IOException: Si hay un error al leer el mensaje.
-     */
     public String recibirMensaje() throws IOException {
         String mensajeEncriptado = this.entrada.readLine();
         this.sesionChatActual.addMensaje(mensajeEncriptado, false);
@@ -256,7 +271,6 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
         return new String(bytesDesencriptados);
     }
 
-
     public void desconectar() throws IOException {
         this.addNuevaSesion(this.sesionChatActual);
         sesionChatActual = null;
@@ -268,12 +282,4 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
         this.password = password;
     }
 
-    public String chequeoReinicioPrimario(String msg) throws IOException {
-        if (msg.equals(Codigos.REINICIAR_PRIMARIO.name())) {
-            msg = this.getEntrada().readLine();
-            this.cambiarAPrimario();
-            this.resincronizar();
-        }
-        return msg;
-    }
 }
