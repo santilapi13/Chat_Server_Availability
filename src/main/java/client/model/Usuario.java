@@ -224,6 +224,7 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
 
     public void enviarMensaje(String mensaje) throws IOException {
 
+        /*
         String mensajeEncriptado;
         try {
             mensajeEncriptado = encriptar(this.password, mensaje, "DES");
@@ -233,9 +234,12 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
         }
 
         System.out.println(mensajeEncriptado);
+        */
         this.sesionChatActual.addMensaje(mensaje, true);
         this.salida.println(Codigos.NUEVO_MENSAJE);
-        this.salida.println(mensajeEncriptado);
+        //this.salida.println(mensajeEncriptado);
+
+        this.salida.println(mensaje);
     }
 
     public String encriptar(String pass, String texto, String algoritmo) throws Exception {
@@ -247,19 +251,22 @@ public class Usuario implements Runnable, GestorSesiones, EnvioMensajes, GestorC
     }
 
     public String recibirMensaje() throws IOException {
-        String mensajeEncriptado = this.entrada.readLine();
-        this.sesionChatActual.addMensaje(mensajeEncriptado, false);
+        String mensaje = this.entrada.readLine();
+        this.sesionChatActual.addMensaje(mensaje, false);
 
         // Desencriptar el mensaje
+        /*
         String mensajeDesencriptado;
         try {
-            mensajeDesencriptado = desencriptar(this.password, mensajeEncriptado, "DES");
+            mensajeDesencriptado = desencriptar(this.password, mensaje, "DES");
         } catch (Exception e) {
             e.printStackTrace();
             return null; // Manejo del error de desencriptación
         }
 
         return mensajeDesencriptado;
+        */
+        return mensaje;
     }
 
     public String desencriptar(String pass, String textoEncriptado, String algoritmo) throws Exception {

@@ -134,19 +134,20 @@ public class SocketUsuario extends Thread {
         }
     }
 
-    public void notificarCaida() throws IOException {
+    public boolean notificarCaida() throws IOException {
         this.salida.println(Codigos.RESINCRONIZAR);
-        this.resincronizar();
-        while (this.socketReinicio == null) {
+        boolean sigueConectado = this.resincronizar();
+        while (sigueConectado && this.socketReinicio == null) {
             try {
                 this.socketReinicio = new Socket(this.socket.getInetAddress(), this.socket.getPort() + 1);
                 System.out.println("Usuario " + this.username + " se conecto al socket de reinicio.");
             } catch (IOException e) {
             }
         }
+        return sigueConectado;
     }
 
-    public void resincronizar() throws IOException {
+    public boolean resincronizar() throws IOException {
         try {
             String[] mensaje = this.entrada.readLine().split(" ");
             this.escuchando = Boolean.parseBoolean(mensaje[0]);
@@ -154,8 +155,10 @@ public class SocketUsuario extends Thread {
             if (this.enChat)
                 this.interlocutor = mensaje[1];
             this.start();
+            return true;
         } catch (IOException e) {
-            Servidor.getInstance().desconectarUsuario(this.username);
+            System.out.println("Usuario " + this.username + " se desconecto.");
+            return false;
         }
     }
 

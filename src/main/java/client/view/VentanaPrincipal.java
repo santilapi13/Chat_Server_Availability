@@ -1,5 +1,7 @@
 package client.view;
 
+import client.model.Usuario;
+
 import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -14,6 +16,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.Color;
+import java.net.UnknownHostException;
 //import com.jgoodies.forms.layout.FormLayout;
 //import com.jgoodies.forms.layout.ColumnSpec;
 //import com.jgoodies.forms.layout.RowSpec;
@@ -155,7 +158,10 @@ public class VentanaPrincipal extends JFrame implements IVista, KeyListener, Mou
 		lblNewLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		panel_6.add(lblNewLabel, BorderLayout.NORTH);
 
-		lblNewLabel_1 = new JLabel("<dynamic>");
+		try {
+			lblNewLabel_1 = new JLabel(Usuario.getInstance().getUsername());
+		} catch (UnknownHostException e) {
+		}
 		lblNewLabel_1.setHorizontalAlignment(SwingConstants.CENTER);
 		panel_6.add(lblNewLabel_1, BorderLayout.SOUTH);
 		this.btnSolicitarChat.setEnabled(false);

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Map;
 
 public class NotificadorCaida extends Thread {
@@ -32,8 +33,14 @@ public class NotificadorCaida extends Thread {
                 String mensaje = this.entrada.readLine();
                 if (mensaje.equals(Codigos.ACTIVAR_SECUNDARIO.name())) {
                     System.out.println("Servidor secundario activado");
+                    ArrayList<String> usuariosDesconectados = new ArrayList<String>();
                     for (Map.Entry<String, SocketUsuario> entry : Servidor.getInstance().getUsuarios().entrySet()) {
-                        entry.getValue().notificarCaida();
+                        if (!entry.getValue().notificarCaida()) {
+                            usuariosDesconectados.add(entry.getKey());
+                        }
+                    }
+                    for (String usuario : usuariosDesconectados) {
+                        Servidor.getInstance().getUsuarios().remove(usuario);
                     }
                     System.out.println("Estado resincronizado");
                 }
@@ -48,6 +55,8 @@ public class NotificadorCaida extends Thread {
                     }
                 }
             }
-        } catch (IOException e) {}
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
