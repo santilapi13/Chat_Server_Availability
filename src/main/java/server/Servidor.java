@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Random;
 
 public class Servidor {
-    // TODO: Plantear reinicio del servidor primario tras su caida.
     private HashMap<String, SocketUsuario> usuarios = new HashMap<String, SocketUsuario>();
     private ServerSocket socketServerNuevosUsuarios;
     private ServerSocket socketServerSecundario;
@@ -65,8 +64,7 @@ public class Servidor {
         while (this.serverRedundante == null) {
             try {
                 this.serverRedundante = new Socket(IP, puertoSecundario + 1);
-                System.out.println(serverRedundante.getInetAddress() + " " + serverRedundante.getPort());
-                System.out.println("Conexion establecida con el servidor secundario en puerto " + puertoSecundario + 1 + ".");
+                System.out.println("Conexion establecida con el servidor secundario.");
             } catch (IOException e) {
                 System.out.println("No se pudo conectar con el servidor secundario. Reintentando en 5 segundos...");
                 try {
@@ -79,13 +77,13 @@ public class Servidor {
     }
 
     public void conectarConPrimario() throws IOException {
-        System.out.println("Esperando solicitud del servidor primario en puerto " + this.puerto + 1 + "...");
+        System.out.println("Esperando solicitud del servidor primario...");
         this.serverRedundante = this.socketServerSecundario.accept();
         System.out.println("Conexion establecida con el servidor primario.");
     }
 
     public void conectarConMonitor() throws IOException {
-        System.out.println("Esperando conexion desde el monitor en puerto " + this.socketServerNuevosUsuarios.getLocalPort() + "...");
+        System.out.println("Esperando conexion desde el monitor...");
         Socket socket = this.socketServerNuevosUsuarios.accept();
         this.monitor = new NotificadorCaida(socket);
         System.out.println("Conexion establecida con el monitor.");
